@@ -19,6 +19,8 @@ public class AoAMessageServer extends Thread
   List serverThreads = new ArrayList();
   boolean running, sendingCmd;
   int count = 0, msgIdx = 0;
+  int startupCount = 0;
+
     
   String[] cmds = { "blank", "largeFlip", "flashText", "green", "night", "elev"};
 
@@ -29,7 +31,7 @@ public class AoAMessageServer extends Thread
   public AoAMessageServer(String[] args) {
  
     int interval = 3000; // default = 3sec
-    int cmdFreq = 10;   // cmd every 30 sec
+    int cmdFreq = 20;   // cmd every 1min
     
     if (args != null) { 
       if (args.length == 2) {
@@ -49,19 +51,20 @@ public class AoAMessageServer extends Thread
     final int modCheck = cmdFreq;
     Timer timer = new Timer();
     TimerTask syncTask = new TimerTask() {
-      int startupCount = 0;
 
       public synchronized void run() {        
         String cmd = getMsgHeader(++msgIdx);
         //String cmd = "<sync time='" + getSyncTime() + "'/>\n";
-        if (msgIdx % modCheck == 0) {
+        
+        if (startupCount < 10) {
+          cmd += " cmd='blank' start='"+CMD_DELAY+"'";
+        }
+        else if (msgIdx % modCheck == 0) {
           cmd += " cmd='"+cmds[count]+"' start='"+CMD_DELAY+"'";
           if (++count == cmds.length)
             count = 0;
         }
-        else if (++startupCount < 10) {
-          cmd += " cmd='blank' start='"+CMD_DELAY+"'";
-        }
+       
          
         cmd += CLOSE_TAG;
         sendMessage(cmd);
@@ -104,6 +107,7 @@ public class AoAMessageServer extends Thread
         serverThreads.add(es);
         System.err.print("[INFO] New client: " + clientSocket
             + " count=" + serverThreads.size() + "\n");
+        startupCount = 0;
       } 
       catch (IOException e) {
         System.err.println("\n[ERROR] Unable to accept client connection: "
