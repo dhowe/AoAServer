@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/*
- * TODO: wrap as service?
- */
-public class AoAMessageServer extends Thread // singleton?
+public class AoAMessageServer extends Thread
 {
   private static final String CLOSE_TAG = "/>\n";
   static final int CMD_DELAY = 2000;
@@ -23,15 +20,11 @@ public class AoAMessageServer extends Thread // singleton?
   boolean running, sendingCmd;
   int count = 0, msgIdx = 0;
     
-  String[] cmds = { "largeFlip", "red", "green", }; 
+  String[] cmds = { "blank", "largeFlip", "flashText", "green", "night", "elev"};
 
   /*String[] cmds = { "blank", "largeFlip", "elev", "red", "bw", 
     "flashText", "night", "green", "flashClips", "brown",  };
 */
-
-  String getMsgHeader(int idx) {
-    return "<sync id='"+idx+"' time='"+getSyncTime()+"'";
-  }
 
   public AoAMessageServer(String[] args) {
  
@@ -56,6 +49,8 @@ public class AoAMessageServer extends Thread // singleton?
     final int modCheck = cmdFreq;
     Timer timer = new Timer();
     TimerTask syncTask = new TimerTask() {
+      int startupCount = 0;
+
       public synchronized void run() {        
         String cmd = getMsgHeader(++msgIdx);
         //String cmd = "<sync time='" + getSyncTime() + "'/>\n";
@@ -64,6 +59,10 @@ public class AoAMessageServer extends Thread // singleton?
           if (++count == cmds.length)
             count = 0;
         }
+        else if (++startupCount < 10) {
+          cmd += " cmd='blank' start='"+CMD_DELAY+"'";
+        }
+         
         cmd += CLOSE_TAG;
         sendMessage(cmd);
         cmd = null;
@@ -71,22 +70,11 @@ public class AoAMessageServer extends Thread // singleton?
     };
     timer.scheduleAtFixedRate(syncTask, 1000, interval);
 
-/*    Timer refreshtimer = new Timer();
-    TimerTask refresh = new TimerTask() {
-      public synchronized void run() {
-        msgIdx++;
-        String cmd = //"<sync id='" + msgIdx + "' time='" + getSyncTime()
-            getMsgHeader() + "' cmd='"+cmds[count]+"' start='"+CMD_DELAY+CLOSE_TAG;
-        //String cmd = "<sync time='" + getSyncTime()
-         // + "' cmd='" + cmds[count] + "' start='" + CMD_DELAY + "'/>\n";
-        sendMessage(cmd);
-
-        if (++count == cmds.length)
-          count = 0;
-      }
-    };
-    refreshtimer.scheduleAtFixedRate(refresh, START_DELAY, (long) interval);*/
     this.start();
+  }
+
+  String getMsgHeader(int idx) {
+    return "<sync id='"+idx+"' time='"+getSyncTime()+"'";
   }
 
   public static long getSyncTime() {
@@ -103,7 +91,7 @@ public class AoAMessageServer extends Thread // singleton?
           + "on port:  "+ MSG_PORT + ".  Exiting...");
       System.exit(0);
     }
-    System.err.print("[INFO] MsgServer running on port: " + MSG_PORT + "\n");
+    System.err.print("[INFO] AoAServer running on port: " + MSG_PORT + "\n");
     super.start();
   }
 
