@@ -56,7 +56,7 @@ public class AoAMessageServer extends Thread
         String cmd = getMsgHeader(++msgIdx);
         //String cmd = "<sync time='" + getSyncTime() + "'/>\n";
         
-        if (startupCount < 10) {
+        if (++startupCount < 5) {
           cmd += " cmd='blank' start='"+CMD_DELAY+"'";
         }
         else if (msgIdx % modCheck == 0) {
